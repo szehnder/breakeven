@@ -5,11 +5,13 @@
   let originalPurchasePrice: number = 563_000;
   let commissionRate: number = 6; // Employer covers up to 6%
   let otherClosingCosts: number = 2_000; // E.g., title, escrow, etc.
+  let capitalGainsTaxRate: number = 20; // Default 20% capital gains tax
   let showOptionalFields: boolean = false;
 
   // Derived values
   $: difference = Math.abs(bma1 - bma2);
   $: averageBMA = (bma1 + bma2) / 2;
+  $: bmaSpreadPercent = ((Math.max(bma1, bma2) - Math.min(bma1, bma2)) / averageBMA) * 100;
 
   // Always use the midpoint as the recommended BMA
   $: recommendedBMA = averageBMA;
@@ -49,11 +51,23 @@
   // With employer coverage (only paying commission above 6%)
   $: breakEvenPriceWithCoverage = originalPurchasePrice + otherClosingCosts;
 
+  // Calculate capital gains tax
+  $: capitalGainsTaxWithCoverage = profitWithEmployerCoverage > 0 
+    ? profitWithEmployerCoverage * (capitalGainsTaxRate / 100) 
+    : 0;
+  $: afterTaxProfitWithCoverage = profitWithEmployerCoverage - capitalGainsTaxWithCoverage;
+
+  $: capitalGainsTaxWithoutCoverage = profitWithoutEmployerCoverage > 0 
+    ? profitWithoutEmployerCoverage * (capitalGainsTaxRate / 100) 
+    : 0;
+  $: afterTaxProfitWithoutCoverage = profitWithoutEmployerCoverage - capitalGainsTaxWithoutCoverage;
+
   // Tooltip visibility states
   let showNetProceedsTooltip = false;
   let showNetProceedsWithoutTooltip = false;
   let showBreakEvenTooltip = false;
   let showBreakEvenWithoutTooltip = false;
+  let showMaxListPriceTooltip = false;
 </script>
 
 <style>
@@ -240,6 +254,14 @@
   .result-item:last-child {
     margin-bottom: 0;
   }
+
+  .spread-high {
+    color: #dc2626;
+  }
+
+  .spread-low {
+    color: #059669;
+  }
 </style>
 
 <div class="container">
@@ -315,6 +337,17 @@
               bind:value={otherClosingCosts}
             />
           </div>
+
+          <div class="input-group">
+            <label class="label">Capital Gains Tax Rate (%)</label>
+            <input
+              class="input"
+              type="number"
+              bind:value={capitalGainsTaxRate}
+              step="0.1"
+            />
+            <small class="help-text">Tax rate applied to profits from the sale</small>
+          </div>
         </div>
       {/if}
     </div>
@@ -327,12 +360,27 @@
       </div>
 
       <div class="result-item">
-        <strong>Recommended BMA</strong>
+        <strong class={bmaSpreadPercent >= 5 ? 'spread-high' : 'spread-low'}>BMA Spread</strong>
+        <span class={bmaSpreadPercent >= 5 ? 'spread-high' : 'spread-low'}>
+          {bmaSpreadPercent.toFixed(1)}%
+        </span>
+      </div>
+
+      <div class="result-item">
+        <strong>Average BMA</strong>
         {recommendedBMA.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
       </div>
 
       <div class="result-item">
-        <strong>Max List Price (103% of Recommended BMA)</strong>
+        <strong>
+          Max List Price
+          <span class="tooltip">
+            <span class="info-icon" on:mouseenter={() => showMaxListPriceTooltip = true} on:mouseleave={() => showMaxListPriceTooltip = false}>i</span>
+            {#if showMaxListPriceTooltip}
+              <span class="tooltip-content">Maximum price allowed by relocation policy (103% of Avg BMA)</span>
+            {/if}
+          </span>
+        </strong>
         {maxListPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
       </div>
 
@@ -362,6 +410,19 @@
             ({profitWithEmployerCoverage >= 0 ? 'Profit' : 'Loss'})
           </span>
         </div>
+
+        {#if profitWithEmployerCoverage > 0}
+          <div class="result-item">
+            <strong>Capital Gains Tax ({capitalGainsTaxRate}%)</strong>
+            {capitalGainsTaxWithCoverage.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+          </div>
+
+          <div class="result-item">
+            <strong>After-Tax Profit</strong>
+            {afterTaxProfitWithCoverage.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+            <span class="profit">(Profit)</span>
+          </div>
+        {/if}
 
         <div class="result-item">
           <strong>
@@ -401,6 +462,19 @@
             ({profitWithoutEmployerCoverage >= 0 ? 'Profit' : 'Loss'})
           </span>
         </div>
+
+        {#if profitWithoutEmployerCoverage > 0}
+          <div class="result-item">
+            <strong>Capital Gains Tax ({capitalGainsTaxRate}%)</strong>
+            {capitalGainsTaxWithoutCoverage.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+          </div>
+
+          <div class="result-item">
+            <strong>After-Tax Profit</strong>
+            {afterTaxProfitWithoutCoverage.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+            <span class="profit">(Profit)</span>
+          </div>
+        {/if}
 
         <div class="result-item">
           <strong>
