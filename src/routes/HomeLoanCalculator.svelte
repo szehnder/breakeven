@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import * as echarts from 'echarts';
+  import PaymentBreakdownChart from '../components/PaymentBreakdownChart.svelte';
 
   // User inputs
   let homePrice: number = 400_000;
@@ -14,12 +14,6 @@
   let hoaFees: number = 0; // monthly HOA fees
   let pmiRate: number = 0.5; // annual PMI rate (if applicable)
   let additionalPayment: number = 0; // additional monthly payment
-
-  // Chart element references
-  let chartContainer: HTMLElement;
-  let comparisonChartContainer: HTMLElement;
-  let chart: echarts.ECharts;
-  let comparisonChart: echarts.ECharts;
 
   // Computed values
   $: monthlyInterestRate = interestRate / 100 / 12;
@@ -140,175 +134,61 @@
     hoa: amortizationSchedule.map(row => row.hoa)
   };
 
-  // Initialize and update chart
-  $: if (chart && chartData) {
-    const option = {
-      title: {
-        text: 'Monthly Payment Breakdown Over Time',
-        left: 'center'
-      },
-      tooltip: {
-        trigger: 'axis',
-        formatter: function(params: any) {
-          const month = params[0].dataIndex + 1;
-          const principal = params[0].value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-          const interest = params[1].value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-          const pmi = params[2].value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-          const propertyTax = params[3].value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-          const insurance = params[4].value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-          const hoa = params[5].value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-          const total = params.reduce((sum: number, param: any) => sum + param.value, 0)
-            .toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-          
-          return `Month ${month}<br/>
-                  Total Payment: ${total}<br/>
-                  Principal: ${principal}<br/>
-                  Interest: ${interest}<br/>
-                  PMI: ${pmi}<br/>
-                  Property Tax: ${propertyTax}<br/>
-                  Insurance: ${insurance}<br/>
-                  HOA: ${hoa}`;
-        }
-      },
-      legend: {
-        data: ['Principal', 'Interest', 'PMI', 'Property Tax', 'Insurance', 'HOA'],
-        bottom: 0
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '15%',
-        containLabel: true
-      },
-      xAxis: {
-        type: 'category',
-        data: chartData.months,
-        name: 'Month'
-      },
-      yAxis: {
-        type: 'value',
-        name: 'Amount ($)',
-        axisLabel: {
-          formatter: (value: number) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
-        }
-      },
-      series: [
-        {
-          name: 'Principal',
-          type: 'line',
-          stack: 'total',
-          areaStyle: {
-            opacity: 0.8,
-            color: '#3b82f6'
-          },
-          data: chartData.principal,
-          smooth: true,
-          lineStyle: {
-            width: 3
-          },
-          itemStyle: {
-            color: '#3b82f6'
-          }
-        },
-        {
-          name: 'Interest',
-          type: 'line',
-          stack: 'total',
-          areaStyle: {
-            opacity: 0.8,
-            color: '#ef4444'
-          },
-          data: chartData.interest,
-          smooth: true,
-          lineStyle: {
-            width: 3
-          },
-          itemStyle: {
-            color: '#ef4444'
-          }
-        },
-        {
-          name: 'PMI',
-          type: 'line',
-          stack: 'total',
-          areaStyle: {
-            opacity: 0.8,
-            color: '#f59e0b'
-          },
-          data: chartData.pmi,
-          smooth: true,
-          lineStyle: {
-            width: 3
-          },
-          itemStyle: {
-            color: '#f59e0b'
-          }
-        },
-        {
-          name: 'Property Tax',
-          type: 'line',
-          stack: 'total',
-          areaStyle: {
-            opacity: 0.8,
-            color: '#10b981'
-          },
-          data: chartData.propertyTax,
-          smooth: true,
-          lineStyle: {
-            width: 3
-          },
-          itemStyle: {
-            color: '#10b981'
-          }
-        },
-        {
-          name: 'Insurance',
-          type: 'line',
-          stack: 'total',
-          areaStyle: {
-            opacity: 0.8,
-            color: '#8b5cf6'
-          },
-          data: chartData.insurance,
-          smooth: true,
-          lineStyle: {
-            width: 3
-          },
-          itemStyle: {
-            color: '#8b5cf6'
-          }
-        },
-        {
-          name: 'HOA',
-          type: 'line',
-          stack: 'total',
-          areaStyle: {
-            opacity: 0.8,
-            color: '#ec4899'
-          },
-          data: chartData.hoa,
-          smooth: true,
-          lineStyle: {
-            width: 3
-          },
-          itemStyle: {
-            color: '#ec4899'
-          }
-        }
-      ]
-    };
-    chart.setOption(option);
-  }
-
-  // Initialize chart on mount
-  onMount(() => {
-    chart = echarts.init(chartContainer);
-    window.addEventListener('resize', () => chart.resize());
-    return () => {
-      chart.dispose();
-      window.removeEventListener('resize', () => chart.resize());
+  // Amortization schedule with additional payments
+  $: acceleratedAmortizationSchedule = Array.from({ length: loanTerm }, (_, i) => {
+    const month = i + 1;
+    let remainingBalance = totalFinanced;
+    let totalPrincipalPaid = 0;
+    let totalInterestPaid = 0;
+    let monthsToPayoff = loanTerm;
+    
+    // Calculate payments for each month up to current month
+    for (let m = 1; m <= month; m++) {
+      const interestPayment = remainingBalance * monthlyInterestRate;
+      const principalPayment = monthlyPrincipalAndInterest - interestPayment + additionalPayment;
+      remainingBalance -= principalPayment;
+      totalPrincipalPaid += principalPayment;
+      totalInterestPaid += interestPayment;
+      
+      // Check if loan is paid off early
+      if (remainingBalance <= 0 && monthsToPayoff === loanTerm) {
+        monthsToPayoff = m;
+        remainingBalance = 0;
+      }
+    }
+    
+    // Check if PMI should be removed (when LTV reaches 78%)
+    const currentLTV = (remainingBalance / homePrice) * 100;
+    const pmiRemoved = requiresPMI && currentLTV <= 78;
+    
+    return {
+      month,
+      payment: monthlyPayment + additionalPayment,
+      principalAndInterest: monthlyPrincipalAndInterest + additionalPayment,
+      principal: monthlyPrincipalAndInterest - (remainingBalance * monthlyInterestRate) + additionalPayment,
+      interest: remainingBalance * monthlyInterestRate,
+      pmi: pmiRemoved ? 0 : monthlyPMI,
+      propertyTax: monthlyPropertyTax,
+      insurance: monthlyInsurance,
+      hoa: hoaFees,
+      remainingBalance,
+      ltv: currentLTV,
+      monthsToPayoff
     };
   });
+
+  // Calculate savings from additional payments
+  $: acceleratedMonthsToPayoff = acceleratedAmortizationSchedule[acceleratedAmortizationSchedule.length - 1].monthsToPayoff;
+  $: monthsSaved = loanTerm - acceleratedMonthsToPayoff;
+  $: yearsSaved = monthsSaved / 12;
+  $: totalInterestWithAdditional = acceleratedAmortizationSchedule.reduce((sum, row) => sum + row.interest, 0);
+  $: interestSaved = totalInterest - totalInterestWithAdditional;
+  
+  // Calculate PMI savings
+  $: originalPMIMonths = requiresPMI ? loanTerm : 0;
+  $: acceleratedPMIMonths = requiresPMI ? acceleratedMonthsToPayoff : 0;
+  $: pmiMonthsSaved = originalPMIMonths - acceleratedPMIMonths;
+  $: pmiSaved = monthlyPMI * pmiMonthsSaved;
 </script>
 
 <style>
@@ -646,6 +526,69 @@
 
   <!-- Chart Section -->
   <div class="card">
-    <div bind:this={chartContainer} class="chart-container"></div>
+    <PaymentBreakdownChart
+      title="Monthly Payment Breakdown Over Time"
+      data={chartData}
+    />
+  </div>
+
+  <!-- Additional Payment Section -->
+  <div class="card">
+    <div class="input-group">
+      <label class="label">Additional Monthly Payment</label>
+      <input
+        class="input"
+        type="text"
+        value={formatCurrency(additionalPayment)}
+        on:input={(e) => {
+          const input = e.target as HTMLInputElement;
+          const value = input.value.replace(/[^0-9]/g, '');
+          additionalPayment = parseInt(value) || 0;
+        }}
+        min="0"
+      />
+      <small class="help-text">Extra payment applied to principal each month</small>
+    </div>
+
+    {#if additionalPayment > 0}
+      <div class="summary-grid" style="margin-top: 1rem; background-color: #f0fdf4; padding: 1rem; border-radius: 0.5rem;">
+        <div class="summary-item">
+          <strong>Months Saved</strong>
+          <div class="value" style="color: #10b981;">
+            {monthsSaved}
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <strong>Years Saved</strong>
+          <div class="value" style="color: #10b981;">
+            {yearsSaved.toFixed(1)}
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <strong>Interest Saved</strong>
+          <div class="value" style="color: #10b981;">
+            {formatCurrency(interestSaved)}
+          </div>
+        </div>
+
+        {#if requiresPMI}
+          <div class="summary-item">
+            <strong>PMI Months Saved</strong>
+            <div class="value" style="color: #10b981;">
+              {pmiMonthsSaved}
+            </div>
+          </div>
+
+          <div class="summary-item">
+            <strong>PMI Saved</strong>
+            <div class="value" style="color: #10b981;">
+              {formatCurrency(pmiSaved)}
+            </div>
+          </div>
+        {/if}
+      </div>
+    {/if}
   </div>
 </div> 
