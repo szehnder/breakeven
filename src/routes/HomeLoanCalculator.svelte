@@ -37,6 +37,16 @@
     }
   }
 
+  // Handle home price changes
+  function handleHomePriceChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    // Remove all non-numeric characters and parse the value
+    const value = parseInt(input.value.replace(/[^0-9]/g, '')) || 0;
+    homePrice = value;
+    // Update down payment amount based on current percentage
+    updateDownPaymentFromPercent();
+  }
+
   // Format currency for display
   function formatCurrency(value: number): string {
     return value.toLocaleString('en-US', {
@@ -338,8 +348,9 @@
         <label class="label">Home Price</label>
         <input
           class="input"
-          type="number"
-          bind:value={homePrice}
+          type="text"
+          value={formatCurrency(homePrice)}
+          on:input={handleHomePriceChange}
           min="0"
           step="10000"
         />
