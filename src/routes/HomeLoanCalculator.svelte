@@ -5,27 +5,77 @@
   // User inputs
   let homePrice: number = 400_000;
   let downPayment: number = 80_000;
+  let downPaymentPercent: number = 20; // percentage of home price
   let loanTermYears: number = 30; // in years
   let loanTerm: number = loanTermYears * 12; // converted to months
   let interestRate: number = 6.5; // annual interest rate
   let propertyTaxRate: number = 1.2; // annual property tax rate
   let homeownersInsurance: number = 1_500; // annual insurance cost
-  let hoaFees: number = 200; // monthly HOA fees
+  let hoaFees: number = 0; // monthly HOA fees
   let pmiRate: number = 0.5; // annual PMI rate (if applicable)
+  let additionalPayment: number = 0; // additional monthly payment
 
-  // Chart element reference
+  // Chart element references
   let chartContainer: HTMLElement;
+  let comparisonChartContainer: HTMLElement;
   let chart: echarts.ECharts;
+  let comparisonChart: echarts.ECharts;
 
   // Computed values
-  $: loanAmount = homePrice - downPayment;
   $: monthlyInterestRate = interestRate / 100 / 12;
-  $: downPaymentPercent = (downPayment / homePrice) * 100;
   $: requiresPMI = downPaymentPercent < 20;
   $: monthlyPMI = requiresPMI ? (loanAmount * (pmiRate / 100)) / 12 : 0;
   $: monthlyPropertyTax = (homePrice * (propertyTaxRate / 100)) / 12;
   $: monthlyInsurance = homeownersInsurance / 12;
   $: totalFinanced = loanAmount;
+  $: loanAmount = homePrice - downPayment;
+
+  // Handle down payment changes
+  function updateDownPaymentFromAmount() {
+    if (homePrice > 0) {
+      downPaymentPercent = (downPayment / homePrice) * 100;
+    }
+  }
+
+  function updateDownPaymentFromPercent() {
+    if (homePrice > 0) {
+      downPayment = (downPaymentPercent / 100) * homePrice;
+    }
+  }
+
+  // Format currency for display
+  function formatCurrency(value: number): string {
+    return value.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+  }
+
+  // Format percentage for display
+  function formatPercentage(value: number): string {
+    return `${value}%`;
+  }
+
+  // Handle currency input changes
+  function handleCurrencyInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.replace(/[^0-9]/g, '');
+    downPayment = parseInt(value) || 0;
+    updateDownPaymentFromAmount();
+  }
+
+  // Handle percentage input changes
+  function handlePercentageInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.replace(/[^0-9]/g, '');
+    const numValue = parseInt(value) || 0;
+    if (numValue <= 100) {
+      downPaymentPercent = numValue;
+      updateDownPaymentFromPercent();
+    }
+  }
 
   // Monthly payment calculation using the loan amortization formula
   $: monthlyPrincipalAndInterest = totalFinanced * 
@@ -285,6 +335,21 @@
     margin-bottom: 1rem;
   }
 
+  .down-payment-container {
+    background-color: #f8fafc;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .down-payment-input {
+    margin-bottom: 0.5rem;
+  }
+
+  .down-payment-input:last-child {
+    margin-bottom: 0;
+  }
+
   .label {
     display: block;
     font-weight: 600;
@@ -402,14 +467,29 @@
 
       <div class="input-group">
         <label class="label">Down Payment</label>
-        <input
-          class="input"
-          type="number"
-          bind:value={downPayment}
-          min="0"
-          step="10000"
-        />
-        <small class="help-text">Recommended: 20% of home price</small>
+        <div class="down-payment-container">
+          <div class="down-payment-input">
+            <input
+              class="input"
+              type="text"
+              value={formatCurrency(downPayment)}
+              on:input={handleCurrencyInput}
+              min="0"
+            />
+            <small class="help-text">Amount</small>
+          </div>
+          <div class="down-payment-input">
+            <input
+              class="input"
+              type="text"
+              value={formatPercentage(downPaymentPercent)}
+              on:input={handlePercentageInput}
+              min="0"
+              max="100"
+            />
+            <small class="help-text">Percent</small>
+          </div>
+        </div>
         {#if requiresPMI}
           <div class="pmi-warning">
             ⚠️ PMI will be required (less than 20% down payment)
