@@ -110,7 +110,7 @@
       </div>
 
       <div class="calculator-card" on:click={() => currentPage = 'investment'}>
-        <h2>Investment Calculator</h2>
+        <h2>Property Investment Calculator</h2>
         <p>Calculate potential returns and analyze investment scenarios.</p>
         <a class="button" on:click|stopPropagation={() => currentPage = 'investment'}>Open Calculator</a>
       </div>
