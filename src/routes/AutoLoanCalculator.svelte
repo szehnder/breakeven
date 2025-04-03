@@ -9,6 +9,7 @@
   let interestRate: number = 5.5; // annual interest rate
   let salesTax: number = 8.5; // sales tax rate
   let titleAndFees: number = 500; // estimated title and registration fees
+  let additionalPayment: number = 0; // additional monthly payment
 
   // Chart element reference
   let chartContainer: HTMLElement;
@@ -32,36 +33,60 @@
   // Total cost of the vehicle including all fees and interest
   $: totalCostWithInterest = totalCost + totalInterest;
 
-  // Amortization schedule
-  $: amortizationSchedule = Array.from({ length: loanTerm }, (_, i) => {
+  // Amortization schedule with additional payments
+  $: acceleratedAmortizationSchedule = Array.from({ length: loanTerm }, (_, i) => {
     const month = i + 1;
     let remainingBalance = totalFinanced;
     let totalPrincipalPaid = 0;
     let totalInterestPaid = 0;
+    let monthsToPayoff = loanTerm;
     
     // Calculate payments for each month up to current month
     for (let m = 1; m <= month; m++) {
       const interestPayment = remainingBalance * monthlyInterestRate;
-      const principalPayment = monthlyPayment - interestPayment;
+      const principalPayment = monthlyPayment - interestPayment + additionalPayment;
       remainingBalance -= principalPayment;
       totalPrincipalPaid += principalPayment;
       totalInterestPaid += interestPayment;
+      
+      // Check if loan is paid off early
+      if (remainingBalance <= 0 && monthsToPayoff === loanTerm) {
+        monthsToPayoff = m;
+        remainingBalance = 0;
+      }
     }
     
     return {
       month,
-      payment: monthlyPayment,
-      principal: monthlyPayment - (remainingBalance * monthlyInterestRate),
+      payment: monthlyPayment + additionalPayment,
+      principal: monthlyPayment - (remainingBalance * monthlyInterestRate) + additionalPayment,
       interest: remainingBalance * monthlyInterestRate,
-      remainingBalance
+      remainingBalance,
+      monthsToPayoff
     };
   });
 
+  // Calculate savings from additional payments
+  $: acceleratedMonthsToPayoff = acceleratedAmortizationSchedule[acceleratedAmortizationSchedule.length - 1].monthsToPayoff;
+  $: monthsSaved = loanTerm - acceleratedMonthsToPayoff;
+  $: totalInterestWithAdditional = acceleratedAmortizationSchedule.reduce((sum, row) => sum + row.interest, 0);
+  $: interestSaved = totalInterest - totalInterestWithAdditional;
+
+  // Format currency for display
+  function formatCurrency(value: number): string {
+    return value.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+  }
+
   // Chart data
   $: chartData = {
-    months: amortizationSchedule.map(row => row.month),
-    principal: amortizationSchedule.map(row => row.principal),
-    interest: amortizationSchedule.map(row => row.interest)
+    months: acceleratedAmortizationSchedule.slice(0, acceleratedMonthsToPayoff).map(row => row.month),
+    principal: acceleratedAmortizationSchedule.slice(0, acceleratedMonthsToPayoff).map(row => row.principal),
+    interest: acceleratedAmortizationSchedule.slice(0, acceleratedMonthsToPayoff).map(row => row.interest)
   };
 
   // Initialize and update chart
@@ -395,7 +420,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each amortizationSchedule.slice(0, 12) as row}
+            {#each acceleratedAmortizationSchedule.slice(0, 12) as row}
               <tr>
                 <td>{row.month}</td>
                 <td>{row.payment.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
@@ -416,5 +441,42 @@
   <!-- Chart Section -->
   <div class="card">
     <div bind:this={chartContainer} class="chart-container"></div>
+  </div>
+
+  <!-- Additional Payment Section -->
+  <div class="card">
+    <div class="input-group">
+      <label class="label">Additional Monthly Payment</label>
+      <input
+        class="input"
+        type="text"
+        value={formatCurrency(additionalPayment)}
+        on:input={(e) => {
+          const input = e.target as HTMLInputElement;
+          const value = input.value.replace(/[^0-9]/g, '');
+          additionalPayment = parseInt(value) || 0;
+        }}
+        min="0"
+      />
+      <small class="help-text">Extra payment applied to principal each month</small>
+    </div>
+
+    {#if additionalPayment > 0}
+      <div class="summary-grid" style="margin-top: 1rem; background-color: #f0fdf4; padding: 1rem; border-radius: 0.5rem;">
+        <div class="summary-item">
+          <strong>Months Saved</strong>
+          <div class="value" style="color: #10b981;">
+            {monthsSaved}
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <strong>Interest Saved</strong>
+          <div class="value" style="color: #10b981;">
+            {formatCurrency(interestSaved)}
+          </div>
+        </div>
+      </div>
+    {/if}
   </div>
 </div> 
