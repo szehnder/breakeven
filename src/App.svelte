@@ -1,8 +1,9 @@
 <script lang="ts">
   import RelocationCalculator from './routes/RelocationCalculator.svelte';
   import InvestmentCalculator from './routes/InvestmentCalculator.svelte';
+  import AutoLoanCalculator from './routes/AutoLoanCalculator.svelte';
 
-  let currentPage: 'home' | 'relocation' | 'investment' = 'home';
+  let currentPage: 'home' | 'relocation' | 'investment' | 'auto' = 'home';
 </script>
 
 <style>
@@ -114,6 +115,12 @@
         <p>Calculate potential returns and analyze investment scenarios.</p>
         <a class="button" on:click|stopPropagation={() => currentPage = 'investment'}>Open Calculator</a>
       </div>
+
+      <div class="calculator-card" on:click={() => currentPage = 'auto'}>
+        <h2>Auto Loan Calculator</h2>
+        <p>Calculate monthly payments, total cost, and view an amortization schedule for your auto loan.</p>
+        <a class="button" on:click|stopPropagation={() => currentPage = 'auto'}>Open Calculator</a>
+      </div>
     </div>
   {:else}
     <a class="back-button" on:click={() => currentPage = 'home'}>← Back to Home</a>
@@ -122,6 +129,8 @@
       <RelocationCalculator />
     {:else if currentPage === 'investment'}
       <InvestmentCalculator />
+    {:else if currentPage === 'auto'}
+      <AutoLoanCalculator />
     {/if}
   {/if}
 </div>
