@@ -142,6 +142,15 @@
       <HomeLoanCalculator />
     {/if}
   {/if}
+
+  <!-- Legal Disclaimer -->
+  <div class="card" style="margin-top: 2rem; background-color: #fef2f2; border: 1px solid #fee2e2;">
+    <div style="color: #991b1b; font-size: 0.875rem;">
+      <strong>⚠️ IMPORTANT DISCLAIMER:</strong>
+      <p>These calculators are provided for informational and educational purposes only. They were created for personal use and should not be considered as financial, investment, tax, or legal advice. The calculations and results are estimates and may not reflect actual financial outcomes.</p>
+      <p>By using these calculators, you acknowledge that you are using them at your own risk and should not rely solely on the results for making financial decisions. Always consult with qualified financial professionals before making any financial decisions.</p>
+    </div>
+  </div>
 </div>
 
 

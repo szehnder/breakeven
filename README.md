@@ -45,3 +45,25 @@ If you have state that's important to retain within a component, consider creati
 import { writable } from 'svelte/store'
 export default writable(0)
 ```
+
+# Financial Calculators
+
+A collection of financial calculators built for personal use.
+
+## Legal Disclaimer
+
+**IMPORTANT DISCLAIMER:** These calculators are provided for informational and educational purposes only. They were created for personal use and should not be considered as financial, investment, tax, or legal advice. The calculations and results are estimates and may not reflect actual financial outcomes.
+
+The creator of these calculators:
+- Makes no representations or warranties about the accuracy, completeness, or suitability of the information provided
+- Is not responsible for any errors or omissions in the calculations
+- Is not liable for any financial decisions made based on the use of these calculators
+- Recommends consulting with qualified financial professionals before making any financial decisions
+
+By using these calculators, you acknowledge that:
+- You are using them at your own risk
+- You should not rely solely on the results for making financial decisions
+- You should verify all calculations independently
+- You are responsible for your own financial decisions and their outcomes
+
+## Calculators Included
