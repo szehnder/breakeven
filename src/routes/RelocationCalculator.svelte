@@ -262,6 +262,216 @@
   .spread-low {
     color: #059669;
   }
+
+  /* Print-specific styles */
+  @media print {
+    /* Reset everything for print */
+    * {
+      box-sizing: border-box !important;
+    }
+
+    .container {
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0.25rem !important;
+      font-size: 0.6875rem !important;
+      line-height: 1.2 !important;
+    }
+
+    h1 {
+      font-size: 1rem !important;
+      margin: 0 0 0.375rem 0 !important;
+      text-align: center !important;
+      font-weight: bold !important;
+    }
+
+    .grid {
+      display: block !important;
+      grid-template-columns: none !important;
+      gap: 0 !important;
+    }
+
+    .card {
+      display: inline-block !important;
+      vertical-align: top !important;
+      width: 48% !important;
+      margin: 0 1% 0.375rem 0 !important;
+      padding: 0.375rem !important;
+      border: 1px solid #000 !important;
+      box-shadow: none !important;
+      page-break-inside: avoid !important;
+    }
+
+    .input-group {
+      margin-bottom: 0.25rem !important;
+      display: block !important;
+    }
+
+    .label {
+      font-size: 0.6875rem !important;
+      margin: 0 0 0.125rem 0 !important;
+      font-weight: 600 !important;
+      display: block !important;
+      width: 100% !important;
+    }
+
+    .input {
+      padding: 0.125rem !important;
+      font-size: 0.6875rem !important;
+      height: 1.25rem !important;
+      min-height: 1.25rem !important;
+      width: 100% !important;
+      display: block !important;
+    }
+
+    .help-text {
+      font-size: 0.5625rem !important;
+      margin: 0.0625rem 0 0 0 !important;
+      display: block !important;
+      color: #666 !important;
+    }
+
+    .result-item {
+      margin-bottom: 0.25rem !important;
+      padding-left: 0 !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+    }
+
+    .result-item strong {
+      font-size: 0.6875rem !important;
+      margin: 0 !important;
+      font-weight: 600 !important;
+    }
+
+    .divider {
+      margin: 0.25rem 0 !important;
+      border-top: 1px solid #000 !important;
+    }
+
+    .accordion-header {
+      display: none !important;
+    }
+
+    .accordion-content {
+      display: block !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .highlighted-input {
+      background-color: transparent !important;
+      border: 1px solid #000 !important;
+      padding: 0.25rem !important;
+      margin: 0.25rem 0 !important;
+    }
+
+    .warning {
+      font-size: 0.5625rem !important;
+      margin: 0.125rem 0 !important;
+      padding: 0.125rem !important;
+      background-color: transparent !important;
+      border: 1px solid #000 !important;
+    }
+
+    .info-icon {
+      display: none !important;
+    }
+
+    .tooltip {
+      display: inline !important;
+    }
+
+    .tooltip-content {
+      display: none !important;
+    }
+
+    .results-group {
+      margin-bottom: 0.375rem !important;
+      background-color: transparent !important;
+      border: 1px solid #000 !important;
+      padding: 0.25rem !important;
+    }
+
+    .results-group-title {
+      font-size: 0.6875rem !important;
+      margin-bottom: 0.25rem !important;
+      padding-bottom: 0.125rem !important;
+      border-bottom: 1px solid #000 !important;
+      font-weight: bold !important;
+    }
+
+    /* Ensure page breaks don't occur in the middle of important sections */
+    .card:first-child {
+      page-break-after: avoid !important;
+    }
+
+    .card:last-child {
+      page-break-before: avoid !important;
+    }
+
+    /* Hide any remaining interactive elements */
+    input[type="number"] {
+      -webkit-appearance: none !important;
+      appearance: none !important;
+      border: 1px solid #000 !important;
+      background: transparent !important;
+    }
+
+    /* Ensure text is readable in print */
+    * {
+      color: #000 !important;
+      background: transparent !important;
+    }
+
+    .profit {
+      color: #000 !important;
+      font-weight: bold !important;
+    }
+
+    .loss {
+      color: #000 !important;
+      font-weight: bold !important;
+    }
+
+    .spread-high {
+      color: #000 !important;
+      font-weight: bold !important;
+    }
+
+    .spread-low {
+      color: #000 !important;
+      font-weight: bold !important;
+    }
+
+    /* Force single page layout */
+    @page {
+      size: A4 !important;
+      margin: 0.25in !important;
+    }
+
+    /* Hide any overflow */
+    body {
+      overflow: hidden !important;
+    }
+
+    /* Compact spacing for all elements */
+    .card > * {
+      margin-bottom: 0.25rem !important;
+    }
+
+    .card > *:last-child {
+      margin-bottom: 0 !important;
+    }
+
+    /* Make result items more compact */
+    .result-item > * {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  }
 </style>
 
 <div class="container">
