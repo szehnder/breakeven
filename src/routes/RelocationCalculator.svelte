@@ -4,7 +4,8 @@
   let bma2: number = 560_000;
   let originalPurchasePrice: number = 563_000;
   let commissionRate: number = 6; // Employer covers up to 6%
-  let otherClosingCosts: number = 2_000; // E.g., title, escrow, etc.
+  let sellerConcessions: number = 6_000; // Default seller concessions
+  let accumulatedExpenses: number = 0; // Accumulated expenses
   let capitalGainsTaxRate: number = 20; // Default 20% capital gains tax
   let showOptionalFields: boolean = false;
 
@@ -34,22 +35,25 @@
     ? 0 
     : desiredSalePrice * ((commissionRate - 6) / 100);
 
+  // Computed total closing costs
+  $: totalClosingCosts = sellerConcessions + accumulatedExpenses;
+
   // Basic net proceeds: sale price - user-paid portion of commission - other costs
-  $: netProceeds = desiredSalePrice - effectiveCommission - otherClosingCosts;
+  $: netProceeds = desiredSalePrice - effectiveCommission - totalClosingCosts;
 
   // Calculate profit/loss with employer covering commission
   $: profitWithEmployerCoverage = netProceeds - originalPurchasePrice;
 
   // Calculate what it would be if you had to pay full commission yourself
   $: fullCommission = desiredSalePrice * (commissionRate / 100);
-  $: netProceedsWithoutEmployerCoverage = desiredSalePrice - fullCommission - otherClosingCosts;
+  $: netProceedsWithoutEmployerCoverage = desiredSalePrice - fullCommission - totalClosingCosts;
   $: profitWithoutEmployerCoverage = netProceedsWithoutEmployerCoverage - originalPurchasePrice;
 
   // Calculate break-even prices
   // Without employer coverage (paying full commission)
-  $: breakEvenPriceWithoutCoverage = (originalPurchasePrice + otherClosingCosts) / (1 - (commissionRate / 100));
+  $: breakEvenPriceWithoutCoverage = (originalPurchasePrice + totalClosingCosts) / (1 - (commissionRate / 100));
   // With employer coverage (only paying commission above 6%)
-  $: breakEvenPriceWithCoverage = originalPurchasePrice + otherClosingCosts;
+  $: breakEvenPriceWithCoverage = originalPurchasePrice + totalClosingCosts;
 
   // Calculate capital gains tax
   $: capitalGainsTaxWithCoverage = profitWithEmployerCoverage > 0 
@@ -540,11 +544,20 @@
           </div>
 
           <div class="input-group">
-            <label class="label">Other Closing Costs (est.)</label>
+            <label class="label">Seller Concessions</label>
             <input
               class="input"
               type="number"
-              bind:value={otherClosingCosts}
+              bind:value={sellerConcessions}
+            />
+          </div>
+
+          <div class="input-group">
+            <label class="label">Accumulated Expenses</label>
+            <input
+              class="input"
+              type="number"
+              bind:value={accumulatedExpenses}
             />
           </div>
 
